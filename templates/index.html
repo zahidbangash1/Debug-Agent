@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AI Debugging Agent | Pro</title>
+  <link rel="stylesheet" href="/static/style.css"/>
+</head>
+<body>
+  <!-- Ambient Background Glow -->
+  <div class="ambient-glow"></div>
+
+  <main class="container">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-badge">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        AI-Powered
+      </div>
+      <h1>Debugging Agent</h1>
+      <p class="subtitle">Paste broken code & traceback → get root cause, tradeoffs, and regression tests.</p>
+    </header>
+
+    <!-- Input Section -->
+    <section class="input-grid">
+      <div class="input-block">
+        <label for="broken-code">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+          Broken Code
+        </label>
+        <textarea id="broken-code" placeholder="def my_broken_function():&#10;    # Paste your code here..."></textarea>
+      </div>
+      <div class="input-block">
+        <label for="error-msg">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+          Error Message
+        </label>
+        <textarea id="error-msg" placeholder="Traceback (most recent call last):&#10;  ..."></textarea>
+      </div>
+    </section>
+
+    <!-- Action Button -->
+    <button id="analyze-btn" onclick="analyzeCode()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+      <span id="btn-text">Analyze & Debug Code</span>
+      <span id="btn-spinner" class="spinner hidden"></span>
+    </button>
+
+    <!-- Error Banner -->
+    <div id="error-banner" class="error-banner hidden"></div>
+
+    <!-- Results Section -->
+    <section id="results" class="hidden">
+      <!-- Meta row -->
+      <div class="meta-row">
+        <span class="badge lang" id="r-language"></span>
+        <span class="badge error-type" id="r-error-type"></span>
+        <span class="badge confidence" id="r-confidence"></span>
+        <span class="badge loop" id="r-loop" style="display:none"></span>
+      </div>
+
+      <!-- Analysis Grid -->
+      <div class="analysis-grid">
+        <!-- Root Cause -->
+        <div class="card glass">
+          <div class="card-label">Root Cause</div>
+          <p id="r-root-cause"></p>
+          <div class="senior-tip" id="r-senior-tip"></div>
+        </div>
+
+        <!-- Plain Explanation -->
+        <div class="card glass">
+          <div class="card-label">Why It Broke</div>
+          <p id="r-explanation"></p>
+        </div>
+      </div>
+
+      <!-- Fixes Grid -->
+      <div class="fixes-grid">
+        <!-- Fix A -->
+        <div class="fix-card glass" id="fix-a-card">
+          <div class="fix-header">
+            <span class="fix-label">Fix A</span>
+            <span class="recommended-badge hidden" id="rec-a">Recommended</span>
+            <button class="copy-btn ms-auto" onclick="copyCode('r-fix-a')">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg> Copy
+            </button>
+          </div>
+          <div class="code-wrapper">
+            <pre><code id="r-fix-a"></code></pre>
+          </div>
+          <div class="tradeoffs">
+            <div class="pros"><span>Pros</span><p id="r-fix-a-pros"></p></div>
+            <div class="cons"><span>Cons</span><p id="r-fix-a-cons"></p></div>
+          </div>
+        </div>
+
+        <!-- Fix B -->
+        <div class="fix-card glass" id="fix-b-card">
+          <div class="fix-header">
+            <span class="fix-label">Fix B</span>
+            <span class="recommended-badge hidden" id="rec-b">Recommended</span>
+            <button class="copy-btn ms-auto" onclick="copyCode('r-fix-b')">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg> Copy
+            </button>
+          </div>
+          <div class="code-wrapper">
+            <pre><code id="r-fix-b"></code></pre>
+          </div>
+          <div class="tradeoffs">
+            <div class="pros"><span>Pros</span><p id="r-fix-b-pros"></p></div>
+            <div class="cons"><span>Cons</span><p id="r-fix-b-cons"></p></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- QA Section -->
+      <div class="qa-grid">
+        <!-- Regression Test -->
+        <div class="card glass relative">
+          <div class="card-label">Regression Test <span class="sublabel">(pytest — save as test_fix.py)</span></div>
+          <div class="code-wrapper">
+            <pre><code id="r-test"></code></pre>
+          </div>
+          <button class="copy-btn absolute top-right" onclick="copyCode('r-test')">
+             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg> Copy
+          </button>
+        </div>
+
+        <!-- Docstring -->
+        <div class="card glass relative" id="docstring-card">
+          <div class="card-label">Docstring to Add</div>
+          <div class="code-wrapper">
+            <pre><code id="r-docstring"></code></pre>
+          </div>
+          <button class="copy-btn absolute top-right" onclick="copyCode('r-docstring')">
+             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg> Copy
+          </button>
+        </div>
+      </div>
+
+    </section>
+  </main>
+
+  <script src="/static/main.js"></script>
+</body>
+</html>
